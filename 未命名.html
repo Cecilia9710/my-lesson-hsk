@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场景中文学习 - 餐厅点餐(HSK1-2)</title>
+    <!-- 引入Tailwind CSS快速样式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // 低饱和度主题 + 宋体
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6b7280',     // 低饱和灰蓝
+                        secondary: '#a87c6b',   // 低饱和棕
+                        neutral: '#f3f4f6',     // 浅灰背景
+                        hsk1: '#7d9d8e',        // 低饱和绿
+                        hsk2: '#9c7986'         // 低饱和紫
+                    },
+                    fontFamily: {
+                        sans: ['SimSun', '宋体', 'serif'] // 宋体优先
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .word-hover { @apply cursor-pointer font-bold transition-all hover:scale-110 relative; }
+            .comic-frame { @apply rounded-lg border-2 border-primary/30 p-5 bg-white/90 shadow-sm; }
+            .dialog-bubble { @apply rounded-xl p-3 max-w-[80%] my-2; }
+            .scene-img { @apply w-full max-w-[280px] h-[180px] object-cover rounded-lg mb-4 shadow-sm; }
+        }
+        /* 词汇悬停拼音预览样式 */
+        .word-hover:hover::after {
+            content: attr(data-pinyin);
+            position: absolute;
+            bottom: -28px;
+            left: 0;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            z-index: 10;
+            white-space: nowrap;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-neutral min-h-screen font-sans">
+    <!-- 顶部导航 -->
+    <header class="bg-primary text-white p-4 shadow-sm">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold flex items-center">
+                <i class="fas fa-utensils mr-2"></i>场景中文学习 - 餐厅点餐
+            </h1>
+            <div class="mt-2 md:mt-0">
+                <span class="bg-hsk1 text-white px-2 py-1 rounded text-sm">HSK1</span>
+                <span class="bg-hsk2 text-white px-2 py-1 rounded text-sm ml-1">HSK2</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6 mt-4">
+        <!-- 连环画区域 -->
+        <section class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-primary">📖 场景连环画</h2>
+                <div class="flex gap-2">
+                    <button id="prevBtn" class="bg-primary text-white px-3 py-1 rounded hover:bg-primary/80">
+                        <i class="fas fa-chevron-left"></i> 上一帧
+                    </button>
+                    <button id="playBtn" class="bg-secondary text-white px-3 py-1 rounded hover:bg-secondary/80">
+                        <i class="fas fa-play"></i> 自动播放
+                    </button>
+                    <button id="nextBtn" class="bg-primary text-white px-3 py-1 rounded hover:bg-primary/80">
+                        下一帧 <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 连环画展示框 -->
+            <div id="comicContainer" class="comic-frame min-h-[450px] flex flex-col items-center justify-center">
+                <div id="frameTitle" class="text-lg font-semibold mb-4 text-secondary">加载中...</div>
+                <img id="frameImage" class="scene-img" src="" alt="场景图片">
+                <div id="frameContent" class="w-full flex flex-col items-center">
+                    <!-- 对话内容会通过JS动态填充 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 学习核心区：词汇+句式 -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- 重点词汇 -->
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <h2 class="text-xl font-bold text-primary mb-4 flex items-center">
+                    <i class="fas fa-book mr-2"></i>重点词汇（点击查看释义/悬停看拼音）
+                </h2>
+                <div id="vocabList" class="flex flex-wrap gap-2">
+                    <!-- 词汇通过JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 核心句式 -->
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <h2 class="text-xl font-bold text-primary mb-4 flex items-center">
+                    <i class="fas fa-comment-dots mr-2"></i>核心句式
+                </h2>
+                <div id="sentenceList" class="space-y-3">
+                    <!-- 句式通过JS动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 互动练习 - 拖拽选词优化版 -->
+        <section class="bg-white rounded-lg p-5 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-primary mb-4 flex items-center">
+                <i class="fas fa-pencil-alt mr-2"></i>即时练习（拖拽填空）
+            </h2>
+            <div class="space-y-4">
+                <div class="p-3 bg-neutral rounded">
+                    <p class="mb-2">A：服务员，我<strong class="text-hsk2">
+                        <span id="blank1" class="border-b-2 border-primary w-20 inline-block text-center h-6 align-middle"></span>
+                    </strong>一碗面条。</p>
+                    <div class="flex gap-2 mt-2">
+                        <span draggable="true" class="bg-hsk2/20 px-3 py-1 rounded cursor-pointer" ondragstart="drag(event)" id="drag1">要</span>
+                        <span draggable="true" class="bg-hsk2/20 px-3 py-1 rounded cursor-pointer" ondragstart="drag(event)">想</span>
+                    </div>
+                    <button onclick="checkDrag(1)" class="bg-primary text-white px-2 py-1 rounded mt-2">检查</button>
+                    <p id="tip1" class="text-sm mt-1"></p>
+                </div>
+
+                <div class="p-3 bg-neutral rounded">
+                    <p class="mb-2">B：好的，<strong class="text-hsk1">
+                        <span id="blank2" class="border-b-2 border-primary w-20 inline-block text-center h-6 align-middle"></span>
+                    </strong>需要别的吗？</p>
+                    <div class="flex gap-2 mt-2">
+                        <span draggable="true" class="bg-hsk1/20 px-3 py-1 rounded cursor-pointer" ondragstart="drag(event)" id="drag2">你</span>
+                        <span draggable="true" class="bg-hsk1/20 px-3 py-1 rounded cursor-pointer" ondragstart="drag(event)">我</span>
+                    </div>
+                    <button onclick="checkDrag(2)" class="bg-primary text-white px-2 py-1 rounded mt-2">检查</button>
+                    <p id="tip2" class="text-sm mt-1"></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 词汇弹窗 -->
+    <div id="wordModal" class="fixed top-0 left-0 w-full h-full bg-black/30 hidden justify-center items-center z-50">
+        <div class="bg-white rounded-lg p-6 w-80 shadow-xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="modalWord" class="text-xl font-bold text-primary"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-red-500">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <p id="modalPinyin" class="text-gray-600 mb-2"></p>
+            <p id="modalLevel" class="mb-2"></p>
+            <p id="modalMeaning" class="text-gray-800"></p>
+        </div>
+    </div>
+
+    <script>
+        // 1. 场景数据核心：添加每帧图片
+        const sceneData = {
+            frames: [
+                {
+                    title: "第一帧：进入餐厅",
+                    image: "https://picsum.photos/id/24/280/180", // 餐厅图片
+                    dialog: [
+                        { speaker: "顾客", text: "你好！我<mark class='word-hover text-hsk1'>想</mark><mark class='word-hover text-hsk2'>吃饭</mark>。", role: "customer" },
+                        { speaker: "服务员", text: "你好！<mark class='word-hover text-hsk1'>请</mark>这边<mark class='word-hover text-hsk1'>坐</mark>。", role: "waiter" }
+                    ]
+                },
+                {
+                    title: "第二帧：点餐",
+                    image: "https://picsum.photos/id/431/280/180", // 点餐图片
+                    dialog: [
+                        { speaker: "顾客", text: "我<mark class='word-hover text-hsk2'>要</mark>一个<mark class='word-hover text-hsk1'>汉堡</mark>，一杯<mark class='word-hover text-hsk1'>水</mark>。", role: "customer" },
+                        { speaker: "服务员", text: "好的，<mark class='word-hover text-hsk2'>马上</mark>来。", role: "waiter" }
+                    ]
+                },
+                {
+                    title: "第三帧：等餐",
+                    image: "https://picsum.photos/id/139/280/180", // 等待图片
+                    dialog: [
+                        { speaker: "顾客", text: "请问，<mark class='word-hover text-hsk2'>多久</mark>好？", role: "customer" },
+                        { speaker: "服务员", text: "请<mark class='word-hover text-hsk1'>等</mark>五分钟。", role: "waiter" }
+                    ]
+                },
+                {
+                    title: "第四帧：结账",
+                    image: "https://picsum.photos/id/26/280/180", // 结账图片
+                    dialog: [
+                        { speaker: "顾客", text: "<mark class='word-hover text-hsk2'>多少钱</mark>？", role: "customer" },
+                        { speaker: "服务员", text: "一共二十<mark class='word-hover text-hsk1'>元</mark>。", role: "waiter" }
+                    ]
+                }
+            ],
+            vocab: [
+                { word: "想", pinyin: "xiǎng", level: 1, meaning: "want to" },
+                { word: "吃饭", pinyin: "chī fàn", level: 2, meaning: "eat a meal" },
+                { word: "请", pinyin: "qǐng", level: 1, meaning: "please" },
+                { word: "坐", pinyin: "zuò", level: 1, meaning: "sit" },
+                { word: "要", pinyin: "yào", level: 2, meaning: "want" },
+                { word: "汉堡", pinyin: "hàn bǎo", level: 1, meaning: "hamburger" },
+                { word: "水", pinyin: "shuǐ", level: 1, meaning: "water" },
+                { word: "马上", pinyin: "mǎ shàng", level: 2, meaning: "right away" },
+                { word: "多久", pinyin: "duō jiǔ", level: 2, meaning: "how long" },
+                { word: "等", pinyin: "děng", level: 1, meaning: "wait" },
+                { word: "多少钱", pinyin: "duō shao qián", level: 2, meaning: "how much" },
+                { word: "元", pinyin: "yuán", level: 1, meaning: "yuan (money)" }
+            ],
+            sentences: [
+                { pattern: "我想+动作", example: "我想吃饭。", note: "表达想要做某事（HSK1核心句式）" },
+                { pattern: "我要+食物", example: "我要汉堡。", note: "点餐专用句式（HSK2）" },
+                { pattern: "多少钱？", example: "一共二十元。", note: "询问价格（HSK2必学）" },
+                { pattern: "请+动作", example: "请坐。", note: "礼貌用语（HSK1）" }
+            ]
+        };
+
+        // 2. 全局变量
+        let currentFrame = 0;
+        let isPlaying = false;
+        let playInterval;
+        const modal = document.getElementById("wordModal");
+
+        // 3. 初始化页面
+        window.onload = function() {
+            renderFrame();
+            renderVocab();
+            renderSentences();
+            initDragDrop();
+        };
+
+        // -------------------- 优化1：语音朗读函数 --------------------
+        function speakText(text) {
+            // 去除HTML标签，纯文本朗读
+            const cleanText = text.replace(/<[^>]+>/g, '');
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = cleanText;
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 4. 渲染连环画帧（含图片+朗读按钮）
+        function renderFrame() {
+            const frame = sceneData.frames[currentFrame];
+            document.getElementById("frameTitle").textContent = frame.title;
+            document.getElementById("frameImage").src = frame.image;
+            document.getElementById("frameImage").alt = frame.title;
+            
+            // 生成对话气泡（新增朗读按钮）
+            let dialogHtml = "";
+            frame.dialog.forEach(item => {
+                const align = item.role === "customer" ? "items-start" : "items-end";
+                const bubbleColor = item.role === "customer" ? "bg-primary/10" : "bg-secondary/10";
+                dialogHtml += `
+                    <div class="w-full flex ${align} mb-3">
+                        <div class="dialog-bubble ${bubbleColor}">
+                            <p class="font-semibold mb-1">${item.speaker}：</p>
+                            <p>${item.text}</p>
+                            <button onclick="speakText('${item.text.replace(/'/g, '')}')" 
+                                    class="text-xs bg-primary/20 px-2 py-1 rounded mt-1 flex items-center gap-1 w-fit">
+                                <i class="fas fa-volume-up"></i> 点击朗读
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById("frameContent").innerHTML = dialogHtml;
+            bindWordClick();
+        }
+
+        // 5. 词汇点击弹窗 + 悬停拼音属性
+        function bindWordClick() {
+            document.querySelectorAll(".word-hover").forEach(word => {
+                const wordText = word.textContent.trim();
+                const wordInfo = sceneData.vocab.find(v => v.word === wordText);
+                if(wordInfo) word.setAttribute('data-pinyin', wordInfo.pinyin);
+                
+                word.onclick = function() {
+                    const wordText = this.textContent.trim();
+                    const wordInfo = sceneData.vocab.find(v => v.word === wordText);
+                    if (wordInfo) {
+                        document.getElementById("modalWord").textContent = wordInfo.word;
+                        document.getElementById("modalPinyin").textContent = `拼音：${wordInfo.pinyin}`;
+                        document.getElementById("modalLevel").innerHTML = 
+                            `<span class="px-2 py-1 rounded text-xs text-white ${wordInfo.level === 1 ? 'bg-hsk1' : 'bg-hsk2'}">
+                                HSK${wordInfo.level}
+                            </span>`;
+                        document.getElementById("modalMeaning").textContent = `释义：${wordInfo.meaning}`;
+                        modal.style.display = "flex";
+                    }
+                };
+            });
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        // 6. 渲染重点词汇（添加悬停拼音属性）
+        function renderVocab() {
+            let vocabHtml = "";
+            sceneData.vocab.forEach(v => {
+                vocabHtml += `
+                    <span class="word-hover px-3 py-1 rounded ${v.level === 1 ? 'bg-hsk1/20 text-hsk1' : 'bg-hsk2/20 text-hsk2'}" 
+                          data-pinyin="${v.pinyin}">${v.word}</span>
+                `;
+            });
+            document.getElementById("vocabList").innerHTML = vocabHtml;
+        }
+
+        // 7. 渲染核心句式
+        function renderSentences() {
+            let sentenceHtml = "";
+            sceneData.vocab.forEach(v => {
+                sentenceHtml += `
+                    <div class="p-3 bg-neutral rounded">
+                        <p class="font-bold text-primary">${v.word}</p>
+                        <p>拼音：${v.pinyin}</p>
+                        <p class="text-sm text-gray-600">HSK${v.level} | ${v.meaning}</p>
+                    </div>
+                `;
+            });
+            document.getElementById("sentenceList").innerHTML = sentenceHtml;
+        }
+
+        // -------------------- 优化3：拖拽填空功能 --------------------
+        function initDragDrop() {
+            // 允许放置
+            ['blank1', 'blank2'].forEach(id => {
+                const el = document.getElementById(id);
+                el.ondragover = (e) => e.preventDefault();
+                el.ondrop = (e) => {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData("text");
+                    el.textContent = document.getElementById(data).textContent;
+                };
+            });
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        // 拖拽练习检查
+        function checkDrag(num) {
+            const answer = document.getElementById(`blank${num}`).textContent.trim();
+            const tip = document.getElementById(`tip${num}`);
+            if (num === 1 && answer === "要") {
+                tip.textContent = "✅ 正确！我要一碗面条。";
+                tip.className = "text-sm mt-1 text-green-600";
+            } else if (num === 2 && answer === "你") {
+                tip.textContent = "✅ 正确！你需要别的吗？";
+                tip.className = "text-sm mt-1 text-green-600";
+            } else {
+                tip.textContent = "❌ 再试试哦~";
+                tip.className = "text-sm mt-1 text-red-600";
+            }
+        }
+
+        // 8. 帧切换
+        document.getElementById("nextBtn").onclick = () => {
+            currentFrame = (currentFrame + 1) % sceneData.frames.length;
+            renderFrame();
+        };
+        document.getElementById("prevBtn").onclick = () => {
+            currentFrame = (currentFrame - 1 + sceneData.frames.length) % sceneData.frames.length;
+            renderFrame();
+        };
+
+        // 9. 自动播放
+        document.getElementById("playBtn").onclick = function() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                this.innerHTML = '<i class="fas fa-pause"></i> 暂停';
+                playInterval = setInterval(() => {
+                    currentFrame = (currentFrame + 1) % sceneData.frames.length;
+                    renderFrame();
+                }, 3000);
+            } else {
+                this.innerHTML = '<i class="fas fa-play"></i> 自动播放';
+                clearInterval(playInterval);
+            }
+        };
+    </script>
+</body>
+</html>
